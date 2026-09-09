@@ -1,0 +1,101 @@
+name: Update SRS image
+
+on:
+  workflow_dispatch:
+    inputs:
+      srs_version:
+        description: "SRS release tag, for example 2.4.0.0. Leave empty for latest."
+        required: false
+        type: string
+      publish_latest:
+        description: "Also publish the latest Docker tag"
+        required: true
+        default: version-only
+        type: choice
+        options:
+          - version-and-latest
+          - version-only
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: omltcat/dcs-srs-server
+  SRS_REPOSITORY: ciribob/DCS-SimpleRadioStandalone
+  SRS_ASSET: SRS-Server-Commandline-Linux
+
+jobs:
+  update-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve SRS release
+        id: release
+        env:
+          REQUESTED_VERSION: ${{ inputs.srs_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -n "$REQUESTED_VERSION" ]; then
+            version="$REQUESTED_VERSION"
+          else
+            version=$(curl --fail --silent --show-error \
+              "https://api.github.com/repos/${SRS_REPOSITORY}/releases/latest" \
+              | jq --raw-output '.tag_name')
+          fi
+
+          tag="$version"
+          version="${tag#v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved SRS release: $tag"
+
+      - name: Download SRS binary
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bin
+          curl --fail --location --show-error \
+            "https://github.com/${SRS_REPOSITORY}/releases/download/${TAG}/${SRS_ASSET}" \
+            --output "bin/${SRS_ASSET}"
+          chmod 0755 "bin/${SRS_ASSET}"
+          test -s "bin/${SRS_ASSET}"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Select image tags
+        id: tags
+        env:
+          PUBLISH_LATEST: ${{ inputs.publish_latest }}
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo 'tags<<EOF'
+            echo "${IMAGE_NAME}:${VERSION}"
+            if [ "$PUBLISH_LATEST" = "version-and-latest" ]; then
+              echo "${IMAGE_NAME}:latest"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and publish image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
