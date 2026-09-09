@@ -99,3 +99,23 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.tags.outputs.tags }}
+
+      - name: Save Docker image archive
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="${IMAGE_NAME}:${VERSION}"
+          archive="dcs-srs-server-${VERSION}.tar.gz"
+          docker pull "$image"
+          docker save "$image" | gzip --stdout > "$archive"
+          test -s "$archive"
+
+      - name: Upload Docker image archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: dcs-srs-server-${{ steps.release.outputs.version }}
+          path: dcs-srs-server-${{ steps.release.outputs.version }}.tar.gz
+          if-no-files-found: error
+          retention-days: 30
