@@ -1,0 +1,45 @@
+services:
+  srs:
+    image: omltcat/dcs-srs-server:latest
+    container_name: dcs-srs-server
+    restart: unless-stopped
+    ports:
+      - "5002:5002/udp"
+      - "5002:5002/tcp"
+      # - 8080:8080
+    volumes:
+      - ./data:/data
+    environment:
+      CONSOLE_LOGS: true                        # Show basic console logs. Default: true.
+      SERVER_PORT: 5002                         # SRS voice port. Also controls the published TCP and UDP ports above.
+      # COALITION_SECURITY: true                # Stop radio transmissions between coalitions. Default: false.
+      # SPECTATOR_AUDIO_DISABLED: true          # Stop spectators from talking. Default: false.
+      # CLIENT_EXPORT_ENABLED: true             # Export connected clients to JSON. Default: false.
+      # REAL_RADIO_TX: true                     # Force radios to half duplex. Default: false.
+      # REAL_RADIO_RX: true                     # Enable radio interference. Default: false.
+      # RADIO_EXPANSION: true                   # Enable expansion radios. Default: false.
+      # EXTERNAL_AWACS_MODE: true               # Enable External AWACS Mode. Default: false.
+      # EXTERNAL_AWACS_MODE_BLUE_PASSWORD: "blue"   # External AWACS Mode Blue password.
+      # EXTERNAL_AWACS_MODE_RED_PASSWORD: "red"     # External AWACS Mode Red password.
+      # CLIENT_EXPORT_FILE_PATH: ""             # Full path for the client export file.
+      # CHECK_FOR_BETA_UPDATES: false           # Check for beta updates. Default: false.
+      # ALLOW_RADIO_ENCRYPTION: true            # Allow radio encryption. Default: true.
+      # TEST_FREQUENCIES: 247.2,120.3           # Enable test-frequency playback.
+      # SHOW_TUNED_COUNT: true                  # Show tuned count. Default: true.
+      # GLOBAL_LOBBY_FREQUENCIES: 248.22        # Enable global lobby frequencies.
+      # SHOW_TRANSMITTER_NAME: true             # Show the transmitting user's name. Default: false.
+      # LOTATC_EXPORT_ENABLED: true             # Enable LOTATC export. Default: false.
+      # LOTATC_EXPORT_PORT: 10712               # LOTATC export port.
+      # LOTATC_EXPORT_IP: 127.0.0.1             # LOTATC export address.
+      # RETRANSMIT_NODE_LIMIT: 0                # Maximum retransmission node count. Default: 0.
+      # STRICT_RADIO_ENCRYPTION: true           # Require strict radio encryption. Default: false.
+      # TRANSMISSION_LOG_ENABLED: true          # Enable transmission CSV logging. Default: false.
+      # HTTP_SERVER_ENABLED: true               # Enable the HTTP server. Default: false.
+      # HTTP_SERVER_PORT: 8080                  # HTTP server port. Default: 8080.
+      # HTTP_SERVER_ADDRESS: localhost          # HTTP server bind address. Default: localhost.
+      # RADIO_EFFECT_OVERRIDE: true             # Disable radio effects on the global frequency. Default: false.
+      # SERVER_IP: 0.0.0.0                      # SRS server bind address. Default: 0.0.0.0.
+      # CFG: ""                                 # Full path to the SRS configuration file.
+      # SERVER_PRESETS_ENABLED: true            # Enable server channel presets.
+      # SERVER_EAM_RADIO_PRESET_ENABLED: true   # Enable server EAM radio presets.
+      # ALLOW_INSTRUCTOR_MODE: true             # Allow instructor mode for EAM users.
